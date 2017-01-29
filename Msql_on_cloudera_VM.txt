@@ -1,0 +1,79 @@
+*** Ref:https://www.cloudera.com/documentation/enterprise/5-8-x/topics/cm_ig_mysql.html
+
+***Check for mysql connector jar in case of error or warnings *****
+**** Jar Location cloudera machine**********
+/var/lib/sqoop/mysql-connector.jar
+
+/var/lib/sqoop2/mysql-connector.jar
+
+
+** Check Sqoop Version ****
+sqoop version
+
+***** Install sqoop on the cloudera VM ******
+sudo yum install sqoop
+
+******Install mysql server on unix Red hat / centos*****
+sudo yum install mysql-server
+
+*** Install mysql server on linux  *********
+sudo apt-get install mysql-server
+
+
+**** start or stop the mysql service *****
+sudo service mysql stop  ** to stop the mysql server ***
+sudo service mysql start **** to start the mysql server ****
+
+** install JDBC connector onthe linux machine ****
+
+*** use tar zxvf to unpack ***
+**z means (un)z̲ip.
+**x means ex̲tract files from the archive.
+**v means print the filenames v̲erbosely.
+**f means the following argument is a f̱ilename
+
+
+
+tar zxvf mysql-connector-java-5.1.31.tar
+
+** copy to directory specifies
+
+
+******* Login to mysql server ******************
+mysql -u root -p     ************* - u imples the user and -p implies the password ****
+
+## My sql prompt appears on login ####
+
+show databases;   /*** gives all databases in the list */
+create database hadoopguide ;	/*create database in mysql */
+
+*** Grant Previleges on the database **** 
+
+******* grant all on database.* TO 'user'@'%' IDENTIFIED BY 'password';**********
+GRANT  ALL  PRIVILEGES  ON hadoopguide.* TO ''@'LOCALHOST' ;    *****  Can add "IDENTIFY BY  'password'" phrase to set password for thr data base 
+
+Quit;   ** to quit out of sql window to terminal window ****
+
+
+***** Create table in the mysql *******************8
+*** Enter the created data base ***
+mysql hadoopguide 
+
+***** Create the table in the database ******
+CREATE TABLE STUDENT(   SID INT(10) PRIMARY KEY  , NAME VARCHAR(100) NOT NULL , AADHAAR_NO INT(14) UNIQUE , GENDER VARCHAR(100) NOT NULL , DOB VARCHAR (100) );
+
+mysql> CREATE TABLE widgets(id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+-> widget_name VARCHAR(64) NOT NULL,
+-> price DECIMAL(10,2),
+-> design_date DATE,
+-> version INT,
+-> design_comment VARCHAR(100));
+
+
+*** Insert Into Table ********
+mysql> INSERT INTO widgets VALUES (NULL, 'sprocket', 0.25, '2010-02-10',
+-> 1, 'Connects two gizmos');
+Query OK, 1 row affected (0.00 sec)
+mysql> INSERT INTO widgets VALUES (NULL, 'gizmo', 4.00, '2009-11-30', 4,
+-> NULL);
+Query OK, 1 row

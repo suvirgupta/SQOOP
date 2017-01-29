@@ -1,0 +1,110 @@
+** Sqoop Help *******\
+sqoop help import
+
+***Scenario 1 : Import data into HDFS  *******
+
+***** Import command in Sqoop **************************
+*** -m 1 : this implies to run only one map reduce job as the data is small parallel processing is not required ************ 
+sqoop import --connect jdbc:mysql://localhost/hadoopguide --table widgets -m 1
+ 
+sqoop import --connect jdbc:mysql://localhost/hadoopguide --table STUDENT -m 1
+
+
+****** Import to target directory *********
+***** target-dir creates a new directory if the directory is already present it gives error *****
+sqoop import  --connect jdbc:mysql: //localhost/hadoopguide \
+--username root --password cloudera\
+--target-dir  /userdata \
+--table STUDENT -m 2 
+
+
+***** Import to warehouse directory *******
+*** Imports to existing directory by creating a sub directory in the existing directory of table name ********
+sqoop import  --connect	jdbc:mysql: //localhost/hadoopguide \
+--username root	--password cloudera\
+--wareouse-dir  /userdata \
+--table STUDENT -m 2 
+
+
+**** import only specified columns ******
+ sqoop import \
+--connect jdbc:mysql://localhost/dualcore \
+--username training --password training \
+--warehouse-dir /userdata \
+--table employees \
+--columns ‘emp_id, lname’
+
+**** import only subset of data  using where clause*****
+sqoop import \
+--connect jdbc:mysql://localhost/dualcore \
+--username training –password training \
+--warehouse-dir /userdata \
+--table products \
+--where ‘price <= 200’
+
+
+******Inspect data in te hadoop file  cat command  ********
+hadoop fs -cat /userdata/STUDENT/part-m-00000
+
+
+
+*********** Sqoop File support  ***********************
+*****************************************************************************
+Sqoop support text file by default for human readability but they cannot 
+hold binary fields (such as database columns of type VARBINARY), and 
+distinguishing between null values and String-based fields containing
+the value "null" can be problematic (although using the --null-string import
+option allows you to control the representation of null values).
+
+
+for this Sqoop also supports SequenceFiles, Avro datafiles, and
+Parquet files. 
+Sqoop does not support AVRO/ sequencial file loading into HIVE
+
+*****************************************************************************
+
+
+**** codegen********
+**** generates table specific class in  java to hold record on local directory for import in case source file generated during import is accidently deleted*********
+sqoop codegen --connect jdbc:mysql://localhost/hadoopguide \
+--table widgets --class-name Widget
+
+***** Incremental Imports ************
+** Sqoop will import rows that have a column value (for
+the column specified with --check-column) that is greater than some specified value
+(set via --last-value). ***************************
+
+*** overwrites data with values of data after the last value of column in RDBMS ****************
+--check-column
+--last - value
+
+*******To appends data with value rather then overwrite use incremental append ****
+--incremental -append 
+--incremental -lastmodified 
+
+ 
+
+********************Import from HDFS to HIVE *********************************************************************
+
+**This three-step process of importing data to HDFS, creating the Hive table, and then
+**loading the HDFS-resident data into Hive can be shortened to one step if you know that
+**you want to import straight from a database directly into Hive
+
+sqoop create-hive-table --connect jdbc:mysql://localhost/hadoopguide --table widgets --fields-terminated-by ',' *** Command for three step process to load data to hive
+
+***** Single step command to load data to hive  *************************
+sqoop import --connect jdbbc:mysql://localhost/hadoopguide \
+--table STUDENT -m 1 --hive-import  
+
+
+**** storing Large bjects CLOB, BLOB in HDFS ******************************************************************
+Normal data are stored in table format in hdfs 
+but large objects like xml files, videos etc cannpt be stopred in block format 
+have to be stored combnined so field containing the large object has to be refrenced to other location.
+Sqoop will store imported large objects in a separate file
+called a LobFile, if they are larger than a threshold size of 16 MB (configurable via the
+sqoop.inline.lob.length.max setting, in bytes)  
+
+**************************************************************************************************************
+
+
