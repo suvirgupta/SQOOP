@@ -42,6 +42,18 @@ tar zxvf mysql-connector-java-5.1.31.tar
 ******* Login to mysql server ******************
 mysql -u root -p     ************* - u imples the user and -p implies the password ****
 
+## to set list of data bases
+show databases;
+## to use a perticular database from the list of the databases;
+use <database name>;
+
+## to look at tbales inthe database
+show tables;
+
+## describe contents of the table
+describe <table name>;
+
+
 ## My sql prompt appears on login ####
 
 show databases;   /*** gives all databases in the list */
@@ -51,6 +63,12 @@ create database hadoopguide ;	/*create database in mysql */
 
 ******* grant all on database.* TO 'user'@'%' IDENTIFIED BY 'password';**********
 GRANT  ALL  PRIVILEGES  ON hadoopguide.* TO ''@'LOCALHOST' ;    *****  Can add "IDENTIFY BY  'password'" phrase to set password for thr data base 
+
+# Examples
+CREATE USER 'jeffrey'@'localhost' IDENTIFIED BY 'mypass';
+GRANT ALL ON db1.* TO 'jeffrey'@'localhost';
+GRANT SELECT ON db2.invoice TO 'jeffrey'@'localhost';
+ALTER USER 'jeffrey'@'localhost' WITH MAX_QUERIES_PER_HOUR 90;
 
 Quit;   ** to quit out of sql window to terminal window ****
 
@@ -77,3 +95,11 @@ Query OK, 1 row affected (0.00 sec)
 mysql> INSERT INTO widgets VALUES (NULL, 'gizmo', 4.00, '2009-11-30', 4,
 -> NULL);
 Query OK, 1 row
+
+
+***** Load data from csv to mysql server 
+load data local infile '/path/of thecsv file ' table <table name >
+fields terminated by ','
+enclosed by '"'
+lines terminated by '\n'
+(column1,column2,column3 .... )

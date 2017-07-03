@@ -1,6 +1,30 @@
 ** Sqoop Help *******\
 sqoop help import
 
+Argument							Description
+--append							Append data to an existing dataset in HDFS
+--as-avrodatafile					Imports data to Avro Data Files
+--as-sequencefile					Imports data to SequenceFiles
+--as-textfile						Imports data as plain text (default)
+--boundary-query <statement>		Boundary query to use for creating splits
+--columns <col,col,col…>			Columns to import from table
+--direct							Use direct import fast path
+--direct-split-size <n>				Split the input stream every n bytes when importing in direct mode
+--inline-lob-limit <n>				Set the maximum size for an inline LOB
+-m,--num-mappers <n>				Use n map tasks to import in parallel
+-e,--query <statement>				Import the results of statement.
+--split-by <column-name>			Column of the table used to split work units
+--table <table-name>				Table to read
+--target-dir <dir>					HDFS destination dir
+--warehouse-dir <dir>				HDFS parent for table destination
+--where <where clause>				WHERE clause to use during import
+-z,--compress						Enable compression
+--compression-codec <c>				Use Hadoop codec (default gzip)
+--null-string <null-string>			The string to be written for a null value for string columns
+--null-non-string <null-string>		The string to be written for a null value for non-string columns
+
+
+
 ***Scenario 1 : Import data into HDFS  *******
 
 ***** Import command in Sqoop **************************
@@ -22,8 +46,22 @@ sqoop import  --connect jdbc:mysql: //localhost/hadoopguide \
 *** Imports to existing directory by creating a sub directory in the existing directory of table name ********
 sqoop import  --connect	jdbc:mysql: //localhost/hadoopguide \
 --username root	--password cloudera\
---wareouse-dir  /userdata \
+--warehouse-dir  /userdata \
 --table STUDENT -m 2 
+
+*******************warehouse-dir vs target-dir*****************************************
+By default, Sqoop will import a table named foo to a directory named foo inside your home directory in HDFS. For example, if your username is someuser, then the import tool will write to /user/someuser/foo/(files). You can adjust the parent directory of the import with the --warehouse-dir argument. For example:
+
+sqoop import --connnect <connect-str> --table foo --warehouse-dir /shared \
+    ...
+This command would write to a set of files in the /shared/foo/ directory.
+
+You can also explicitly choose the target directory, like so:
+
+sqoop import --connnect <connect-str> --table foo --target-dir /dest \
+    ...
+This will import the files into the /dest directory. --target-dir is incompatible with --warehouse-dir.
+
 
 
 **** import only specified columns ******
@@ -56,6 +94,26 @@ distinguishing between null values and String-based fields containing
 the value "null" can be problematic (although using the --null-string import
 option allows you to control the representation of null values).
 
+SequenceFiles are a binary format that store individual records in custom record-specific data types. 
+These data types are manifested as Java classes. Sqoop will automatically generate these data types for you. 
+This format supports exact storage of all data in binary representations, 
+and is appropriate for storing binary data (for example, VARBINARY columns), 
+or data that will be principly manipulated by custom MapReduce programs (reading from SequenceFiles is higher-performance than reading from text files, 
+as records do not need to be parsed).
+
+Avro data files are a compact, efficient binary format that provides interoperability with applications written in other programming languages.
+ Avro also supports versioning, so that when, e.g., columns are added or removed from a table, previously imported data files can be processed along with new ones.
+ 
+--as-avrodatafile					Imports data to Avro Data Files
+--as-sequencefile					Imports data to SequenceFiles
+--as-textfile						Imports data as plain text (default)
+
+By default, data is not compressed. 
+You can compress your data by using the deflate (gzip) algorithm with the -z or --compress argument, 
+or specify any Hadoop compression codec using the --compression-codec argument. This applies to SequenceFile, text, and Avro files.
+
+-- compress \
+--compresion codec org.apache.hadoop.io.compress.SnappyCodec \
 
 for this Sqoop also supports SequenceFiles, Avro datafiles, and
 Parquet files. 
@@ -79,10 +137,29 @@ the column specified with --check-column) that is greater than some specified va
 --last - value
 
 *******To appends data with value rather then overwrite use incremental append ****
---incremental -append 
---incremental -lastmodified 
+--incremental -append       ** to incrementally append values based on the last-value specified for column inthe check-column
+--incremental -lastmodified   ** incremental update on the column specified that should of timestamp type or date type and the last timestamp specified in last-value
 
- 
+sqoop import --connect jdbc:mysql://localhost/dualcore --username training --password training --target-dir /mydata/stud1 \
+--table customers -m 2 --incremental lastmodified --check-column cust_id --last-value 1000100
+
+
+
+***********************free form query import ****************************************8
+$ sqoop import \
+  --query 'SELECT a.*, b.* FROM a JOIN b on (a.id == b.id) WHERE $CONDITIONS' \
+  --split-by a.id --target-dir /user/foo/joinresults
+Alternately, the query can be executed once and imported serially, by specifying a single map task with -m 1:
+
+******* --split-by splits data based onthe column specified for fast import 
+split-by has to be used in the sqoop import command if the table to be imported from the database.
+does nothave any primary key specified to split for mapreduce to work. 
+by default the tables are split in the map reduce jobs based onthe primary key columns.
+
+$ sqoop import \
+  --query 'SELECT a.*, b.* FROM a JOIN b on (a.id == b.id) WHERE $CONDITIONS' \
+  -m 1 --target-dir /user/foo/joinresults
+
 
 ********************Import from HDFS to HIVE *********************************************************************
 
@@ -108,3 +185,24 @@ sqoop.inline.lob.length.max setting, in bytes)
 **************************************************************************************************************
 
 
+#####################################################################################################################
+
+***** Sqoop Export **********************************************
+#!/bin/bash
+
+# ... your script
+hive_char=$( printf "\x01" )
+
+sqoop export --connect jdbc:mysql://mysqlm/site --username site --password site \
+--table x_data 
+--export-dir /x  \
+--input-fields-terminated-by ${hive_char} \
+--lines-terminated-by '\n'
+
+Argument	Description
+--enclosed-by <char>			Sets a required field enclosing character
+--escaped-by <char>				Sets the escape character
+--fields-terminated-by <char>	Sets the field separator character
+--lines-terminated-by <char>	Sets the end-of-line character
+--mysql-delimiters				Uses MySQL’s default delimiter set: fields: , lines: \n escaped-by: \ optionally-enclosed-by: '
+--optionally-enclosed-by <char>	Sets a field enclosing character
